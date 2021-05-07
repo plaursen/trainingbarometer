@@ -1,7 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <script>
+        var setup = function(){
+            var urlParams = new URLSearchParams(window.location.search);
+            var hours = urlParams.get("hours");
+            var flights =  urlParams.get("flights");
+            var solid = urlParams.has("solid");
+    
+            document.getElementById("hours").value = hours;
+            document.getElementById("flights").value = flights;
 
+            showTrainingBarometer("myCanvas", hours, flights, solid);    
+
+            document.getElementById("update").onclick = function(){
+                showTrainingBarometer("myCanvas", document.getElementById("hours").value, document.getElementById("flights").value, solid);    
+            };
+        };
+    
+    
+    
+    
+        var showTrainingBarometer = function(canvasId, pilotHours, pilotFlights, solid)
+        {
+            var canvas = document.getElementById(canvasId);
+            var h = canvas.height;
+            var w = canvas.width;
+            var ctx = canvas.getContext("2d");
+    
+            // define gradient, optionally solid
+            var grd = ctx.createLinearGradient(0, 0, 0, h);
+            grd.addColorStop(0, "green");
+            if(solid)
+                grd.addColorStop(0.332, "green");
+            grd.addColorStop(0.333, "yellow");
+            grd.addColorStop(0.666, "yellow");
+            if(solid)
+                grd.addColorStop(0.667, "red");
+            grd.addColorStop(1, "red");
+    
+            var charSize = 10;
+            ctx.font = charSize + "px Arial";
+    
+            // top of scales
+            var topHours = 30;
+            var topFlights = 45;
+    
+            // bar size
+            var l=Math.max(0.15*w, 2*charSize);
+            var r=Math.min(0.85*w, w-2*charSize);
+            var t=Math.max(0.05*h, 2*charSize);
+            var b=h-charSize;
+            var bh = b-t;
+            var bw = r-l;
+            ctx.fillStyle = grd;
+            ctx.fillRect(l, t, bw, bh);    
+    
+            // labels
+            var leftLabel = w < 7 * charSize ? "T" : "Timer";
+            var rightLabel = w < 7 * charSize ? "S" : "Starter";
+    
+            ctx.fillStyle = "#000000";
+            ctx.textAlign = "start";
+            ctx.fillText(leftLabel, 0, charSize);
+            ctx.textAlign = "end";
+            ctx.fillText(rightLabel, w, charSize);
+    
+            ctx.textAlign = "end";
+            for(var hours=0;hours<=topHours;hours+=3){
+                var dy = bh*hours/topHours;
+                ctx.fillText(hours, l-2, b-dy+charSize/2);
+            }
+            ctx.textAlign = "start";
+            for(var flights=0;flights<=topFlights;flights+=3){
+                var dy = bh*flights/topFlights;
+                ctx.fillText(flights, r+2, b-dy+charSize/2);
+            }
+    
+            // plot the pilot's data
+            if(pilotHours && pilotFlights){
+                var yH = bh*pilotHours/topHours;
+                var yF = bh*pilotFlights/topFlights;
+                var cx = (r+l)/2;
+                var cy = (yH+yF)/2;
+                ctx.moveTo(l,b-yH);
+                ctx.lineTo(r,b-yF);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(cx, b-cy, bw/10, 0, 2*Math.PI);
+                ctx.stroke();
+    
+                if(cy > bh){
+                    ctx.fillStyle = "green";
+                    ctx.beginPath();
+                    var nA = 3;
+                    var hA = t/nA;
+                    for(var n=0;n<nA;n++){
+                        ctx.moveTo (cx, n*hA);
+                        ctx.lineTo (cx-10, (n+1)*hA);
+                        ctx.lineTo (cx, (n+0.5)*hA);
+                        ctx.lineTo (cx+10, (n+1)*hA);
+                        ctx.lineTo (cx, n*hA);
+                    }
+                    ctx.fill();
+                }
+            }
+        }
+    </script>
+    
 </head>
 
 
@@ -9,109 +116,17 @@
 
     <div width=50% style="margin-left: 200px;margin-top:50px;">
 
-        <canvas id="myCanvas" width="100" height="400" style="border:1px solid #000000;"></canvas>    
+        <form >
+            <table style="border:0px;paddin=0px;margin:0px">
+                <tr><td><label for="hours">Timer:</label></td><td><input type=text id="hours" size=4></td></tr>
+                <tr><td><label for="hours">Starter:</label></td><td><input type=text id="flights" size=4></td></tr>
+                <tr><td colspan=2><input type=button id=update value="Opdatér" style="width:100%"><td></tr>
+            </table>
+        </form>
+        <canvas id="myCanvas" width="115" height="400" style="border:1px solid #000000;"></canvas>    
     </div>
 
 
 </body>
-<script>
-    var setup = function(){
-        var urlParams = new URLSearchParams(window.location.search);
-        var hours = urlParams.get("hours");
-        var flights =  urlParams.get("flights");
-        var solid = urlParams.has("solid");
-
-        showTrainingBarometer("myCanvas", hours, flights, solid);    
-    };
-
-
-
-
-    var showTrainingBarometer = function(canvasId, pilotHours, pilotFlights, solid)
-    {
-        var canvas = document.getElementById(canvasId);
-        var h = canvas.height;
-        var w = canvas.width;
-        var ctx = canvas.getContext("2d");
-
-        // define gradient, optionally solid
-        var grd = ctx.createLinearGradient(0, 0, 0, h);
-        grd.addColorStop(0, "green");
-        if(solid)
-            grd.addColorStop(0.332, "green");
-        grd.addColorStop(0.333, "yellow");
-        grd.addColorStop(0.666, "yellow");
-        if(solid)
-            grd.addColorStop(0.667, "red");
-        grd.addColorStop(1, "red");
-
-        var charSize = 10;
-        ctx.font = charSize + "px Arial";
-
-        // top of scales
-        var topHours = 30;
-        var topFlights = 45;
-
-        // bar size
-        var l=Math.max(0.15*w, 2*charSize);
-        var r=Math.min(0.85*w, w-2*charSize);
-        var t=Math.max(0.05*h, 2*charSize);
-        var b=h-charSize;
-        var bh = b-t;
-        var bw = r-l;
-        ctx.fillStyle = grd;
-        ctx.fillRect(l, t, bw, bh);    
-
-        // labels
-        var leftLabel = w < 7 * charSize ? "T" : "Timer";
-        var rightLabel = w < 7 * charSize ? "S" : "Starter";
-
-        ctx.fillStyle = "#000000";
-        ctx.textAlign = "start";
-        ctx.fillText(leftLabel, 0, charSize);
-        ctx.textAlign = "end";
-        ctx.fillText(rightLabel, w, charSize);
-
-        ctx.textAlign = "end";
-        for(var hours=0;hours<=topHours;hours+=3){
-            var dy = bh*hours/topHours;
-            ctx.fillText(hours, l-2, b-dy+charSize/2);
-        }
-        ctx.textAlign = "start";
-        for(var flights=0;flights<=topFlights;flights+=3){
-            var dy = bh*flights/topFlights;
-            ctx.fillText(flights, r+2, b-dy+charSize/2);
-        }
-
-        // plot the pilot's data
-        if(pilotHours && pilotFlights){
-            var yH = bh*pilotHours/topHours;
-            var yF = bh*pilotFlights/topFlights;
-            var cx = (r+l)/2;
-            var cy = (yH+yF)/2;
-            ctx.moveTo(l,b-yH);
-            ctx.lineTo(r,b-yF);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx, b-cy, bw/10, 0, 2*Math.PI);
-            ctx.stroke();
-
-            if(cy > bh){
-                ctx.fillStyle = "green";
-                ctx.beginPath();
-                var nA = 3;
-                var hA = t/nA;
-                for(var n=0;n<nA;n++){
-                    ctx.moveTo (cx, n*hA);
-                    ctx.lineTo (cx-10, (n+1)*hA);
-                    ctx.lineTo (cx, (n+0.5)*hA);
-                    ctx.lineTo (cx+10, (n+1)*hA);
-                    ctx.lineTo (cx, n*hA);
-                }
-                ctx.fill();
-            }
-        }
-    }
-</script>
 
 </html>
